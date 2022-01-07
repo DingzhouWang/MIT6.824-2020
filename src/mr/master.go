@@ -5,12 +5,54 @@ import "net"
 import "os"
 import "net/rpc"
 import "net/http"
+import "sync"
+import "time"
 
+type MasterTaskStatus int
+
+//3 status for each task(Map & Reduce)
+const(
+	Idle MasterTaskStatus = iota
+	In_Progess
+	Completed
+)
+
+//States for Task and Master
+type State int
+
+const(
+	Map State = iota
+	Reduce
+	Exit
+	Wait
+)
+
+type Task struct {
+	Input string
+	Output string
+	TaskState State
+	TaskNumber int
+	NReducer int
+	Intermediates []string
+}
 
 type Master struct {
 	// Your definitions here.
-
+	TaskQueue chan *Task
+	TaskMeta map[int]*MasterTask
+	MasterPhase States
+	NReduce int
+	InputFiles []string
+	Intermediates [][]string
 }
+
+type MasterTask struct {
+	TaskStatus MasterTaskStatus
+	StartTime time.Time
+	TaskReference *Task
+}
+
+var mu sync.Mutex
 
 // Your code here -- RPC handlers for the worker to call.
 
