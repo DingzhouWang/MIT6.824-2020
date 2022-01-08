@@ -38,12 +38,13 @@ type Task struct {
 
 type Master struct {
 	// Your definitions here.
-	TaskQueue chan *Task
-	TaskMeta map[int]*MasterTask
-	MasterPhase States
-	NReduce int
+	TaskQueue chan *Task         //Save the task waiting to be done (we save task_id in this queue, 
+								 //after we get task_id, we get task from TaskMeta)
+	TaskMeta map[int]*MasterTask //Save reference and status for tasks
+	MasterPhase   State          //Tag it's Map state or Reduce state
+	NReduce int                  //保留输入数据
 	InputFiles []string
-	Intermediates [][]string
+	Intermediates [][]string     //中间结果
 }
 
 type MasterTask struct {
@@ -52,7 +53,7 @@ type MasterTask struct {
 	TaskReference *Task
 }
 
-var mu sync.Mutex
+var mut sync.Mutex
 
 // Your code here -- RPC handlers for the worker to call.
 
@@ -88,11 +89,9 @@ func (m *Master) server() {
 // if the entire job has finished.
 //
 func (m *Master) Done() bool {
-	ret := false
-
-	// Your code here.
-
-
+	mut.Lock()
+	defer mu.Unlock()
+	ret := m.MasterPhase == Exit
 	return ret
 }
 
@@ -102,11 +101,27 @@ func (m *Master) Done() bool {
 // nReduce is the number of reduce tasks to use.
 //
 func MakeMaster(files []string, nReduce int) *Master {
-	m := Master{}
+	m := Master{
+			TaskQueue:	   make(chan *Task, max(nReduce, len(files))),
+			TaskMeta:	   make(map[int]*MasterTask),
+			MasterPhase:   Map,
+			NReduce:	   nReduce,
+			InputFiles:	   files,
+			Intermediates: make([][]string, nReduce),
+	}
 
 	// Your code here.
-
-
+	m.creatMapTask() //create Map task
+					 //
 	m.server()
+
 	return &m
+}
+
+func (m *Master) catchTimeOut{
+
+}
+
+func (m *Master) createMapTask{
+
 }
