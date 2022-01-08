@@ -31,7 +31,7 @@ type Task struct {
 	Input string
 	Output string
 	TaskState State
-	TaskNumber int
+	TaskNumber int  //task id
 	NReducer int
 	Intermediates []string
 }
@@ -39,8 +39,8 @@ type Task struct {
 type Master struct {
 	// Your definitions here.
 	TaskQueue chan *Task         //Save the task waiting to be done (we save task_id in this queue, 
-								 //after we get task_id, we get task from TaskMeta)
-	TaskMeta map[int]*MasterTask //Save reference and status for tasks
+								 //after we get task_id, we get task from TaskMeta) 等待执行的task
+	TaskMeta map[int]*MasterTask //Save reference and status for tasks 当前所有task信息
 	MasterPhase   State          //Tag it's Map state or Reduce state
 	NReduce int                  //保留输入数据
 	InputFiles []string
@@ -118,10 +118,20 @@ func MakeMaster(files []string, nReduce int) *Master {
 	return &m
 }
 
-func (m *Master) catchTimeOut{
-
-}
 
 func (m *Master) createMapTask{
-
+	//根据传入的filename，每个文件对应一个map task
+	for idx, filename := range m.InputFiles{
+		taskMeta := Task{
+			Input:	    filename,
+			TaskState:  Map,
+			NReducer:   m.NReduce,
+			TaskNumber: idx,
+		}
+		m.TaskQueue <- &TaskMeta
+		m.TaskMeta[idx] = &MasterTask{
+			TaskStates:    Idle, //现在等待执行
+			TaskReference: &taskMeta,
+		}
+	}
 }
